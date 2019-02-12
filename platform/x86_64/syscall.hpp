@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 namespace ef {
 namespace platform {
 
@@ -339,59 +341,76 @@ enum class SC : long {
     statx                  = 332,
 };
 
-template <typename T0>
-[[maybe_unused]] static __inline T0 syscall(SC n) {
-    T0 ret;
+[[maybe_unused]] static inline long syscall(long n) {
+    long ret;
     __asm__ __volatile__("syscall" : "=a"(ret) : "a"(n) : "rcx", "r11", "memory");
     return ret;
 }
 
-template <typename T0, typename T1>
-[[maybe_unused]] static __inline T0 syscall(SC n, T1 &&a1) {
-    T0 ret;
+[[maybe_unused]] static inline long syscall(long n, long a1) {
+    long ret;
     __asm__ __volatile__("syscall" : "=a"(ret) : "a"(n), "D"(a1) : "rcx", "r11", "memory");
     return ret;
 }
 
-template <typename T0, typename T1, typename T2>
-[[maybe_unused]] static __inline T0 syscall(SC n, T1 &&a1, T2 &&a2) {
-    T0 ret;
+[[maybe_unused]] static inline long syscall(long n, long a1, long a2) {
+    long ret;
     __asm__ __volatile__("syscall" : "=a"(ret) : "a"(n), "D"(a1), "S"(a2) : "rcx", "r11", "memory");
     return ret;
 }
 
-template <typename T0, typename T1, typename T2, typename T3>
-[[maybe_unused]] static __inline T0 syscall(SC n, T1 &&a1, T2 &&a2, T3 &&a3) {
-    T0 ret;
+[[maybe_unused]] static inline long syscall(long n, long a1, long a2, long a3) {
+    long ret;
     __asm__ __volatile__("syscall" : "=a"(ret) : "a"(n), "D"(a1), "S"(a2), "d"(a3) : "rcx", "r11", "memory");
     return ret;
 }
 
-template <typename T0, typename T1, typename T2, typename T3, typename T4>
-[[maybe_unused]] static __inline T0 syscall(SC n, T1 &&a1, T2 &&a2, T3 &&a3, T4 &&a4) {
-    T0          ret;
-    register T4 r10 __asm__("r10") = a4;
+[[maybe_unused]] static inline long syscall(long n, long a1, long a2, long a3, long a4) {
+    long          ret;
+    register long r10 __asm__("r10") = a4;
     __asm__ __volatile__("syscall" : "=a"(ret) : "a"(n), "D"(a1), "S"(a2), "d"(a3), "r"(r10) : "rcx", "r11", "memory");
     return ret;
 }
 
-template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
-[[maybe_unused]] static __inline T0 syscall(SC n, T1 &&a1, T2 &&a2, T3 &&a3, T4 &&a4, T5 &&a5) {
-    T0          ret;
-    register T4 r10 __asm__("r10") = a4;
-    register T5 r8 __asm__("r8")   = a5;
+[[maybe_unused]] static inline long syscall(long n, long a1, long a2, long a3, long a4, long a5) {
+    long          ret;
+    register long r10 __asm__("r10") = a4;
+    register long r8 __asm__("r8")   = a5;
     __asm__ __volatile__("syscall" : "=a"(ret) : "a"(n), "D"(a1), "S"(a2), "d"(a3), "r"(r10), "r"(r8) : "rcx", "r11", "memory");
     return ret;
 }
 
-template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-[[maybe_unused]] static __inline T0 syscall(SC n, T1 &&a1, T2 &&a2, T3 &&a3, T4 &&a4, T5 &&a5, T6 &&a6) {
-    T0          ret;
-    register T4 r10 __asm__("r10") = a4;
-    register T5 r8 __asm__("r8")   = a5;
-    register T6 r9 __asm__("r9")   = a6;
+[[maybe_unused]] static inline long syscall(long n, long a1, long a2, long a3, long a4, long a5, long a6) {
+    long          ret;
+    register long r10 __asm__("r10") = a4;
+    register long r8 __asm__("r8")   = a5;
+    register long r9 __asm__("r9")   = a6;
     __asm__ __volatile__("syscall" : "=a"(ret) : "a"(n), "D"(a1), "S"(a2), "d"(a3), "r"(r10), "r"(r8), "r"(r9) : "rcx", "r11", "memory");
     return ret;
+}
+
+namespace details {
+
+template <typename T, typename T1>
+[[maybe_unused]] static inline constexpr T reinterpret_or_static_cast(T1 *val) {
+    return reinterpret_cast<T>(val);
+}
+
+template <typename T, typename T1>
+[[maybe_unused]] static inline constexpr T reinterpret_or_static_cast(T1 val) {
+    return static_cast<T>(val);
+}
+
+}  // namespace details
+
+template <typename T0>
+[[maybe_unused]] static inline T0 syscall(SC n) {
+    return details::reinterpret_or_static_cast<T0>(syscall(static_cast<long>(n)));
+}
+
+template <typename T0, typename... Args>
+[[maybe_unused]] static inline T0 syscall(SC n, Args &&... args) {
+    return details::reinterpret_or_static_cast<T0>(syscall(static_cast<long>(n), details::reinterpret_or_static_cast<long>(args)...));
 }
 
 }  // namespace platform
